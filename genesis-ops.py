@@ -22,7 +22,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
 
-PORT = 8765
+PORT = 8787
+RESERVED = {8000, 6379, 5432, 5678, 8765, 8766}
 SKIP_DIR = {
     "node_modules", ".git", "dist", "build", "target", ".venv", "venv",
     "__pycache__", ".next", ".cache", ".turbo", ".output", "vendor",
@@ -318,6 +319,24 @@ StartupNotify=true
     print("Avaa kuvake tai aja: python3", target)
 
 
+def check_ports() -> None:
+    import urllib.request
+    targets = [
+        (8765, "crypto dashboard"),
+        (8766, "mission control"),
+        (8000, "vLLM"),
+        (8787, "genesis ops scanner"),
+    ]
+    print("Vain luku. Ei tapeta prosesseja.")
+    for port, name in targets:
+        url = f"http://127.0.0.1:{port}/"
+        try:
+            with urllib.request.urlopen(url, timeout=2) as resp:
+                print(f"UP   :{port}  {name}  HTTP {resp.status}")
+        except Exception as exc:
+            print(f"DOWN :{port}  {name}  {type(exc).__name__}")
+
+
 def self_test() -> None:
     import tempfile
     tmp = Path(tempfile.mkdtemp())
@@ -329,12 +348,15 @@ def self_test() -> None:
     data = scan()
     names = {p["name"] for p in data["projects"]}
     assert "hister" in names and "GENESIS_AUDITS" in names, names
+    assert PORT == 8787 and 8765 in RESERVED and 8766 in RESERVED
     print("SELF-TEST OK", sorted(names))
 
 
 if __name__ == "__main__":
     if "--self-test" in sys.argv:
         self_test()
+    elif "--check" in sys.argv:
+        check_ports()
     elif "--install" in sys.argv:
         install()
     else:
