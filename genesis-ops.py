@@ -6,7 +6,9 @@
 
 Install writes a desktop icon and copies this file to
 /home/prime1/genesis-ops/genesis-ops.py
-The icon opens http://127.0.0.1:8765 on this computer only.
+The icon opens http://127.0.0.1:8787 on this computer only.
+This is the project scanner. It is not Crypto Dashboard (:8765)
+and not Mission Control (:8766).
 """
 from __future__ import annotations
 
@@ -141,7 +143,7 @@ svg{width:100%;height:auto}
 </head>
 <body>
 <header>
-  <p class="sub">Paikallinen · vain tämä kone · ei Grok</p>
+  <p class="sub">Projektiskanneri · ei crypto dashboard :8765 · ei mission control :8766</p>
   <h1>Genesis <span>Ops</span></h1>
   <p class="sub" id="meta">skannataan…</p>
 </header>
@@ -251,11 +253,25 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def serve() -> None:
-    server = ThreadingHTTPServer(("127.0.0.1", PORT), Handler)
-    print(f"Genesis Ops tällä koneella: http://127.0.0.1:{PORT}")
+    port = PORT
+    server = None
+    for candidate in range(PORT, PORT + 8):
+        if candidate in RESERVED:
+            continue
+        try:
+            server = ThreadingHTTPServer(("127.0.0.1", candidate), Handler)
+            port = candidate
+            break
+        except OSError:
+            continue
+    if server is None:
+        raise SystemExit("Ei vapaata porttia 8787–8794. Crypto :8765 jätettiin rauhaan.")
+    url = f"http://127.0.0.1:{port}"
+    print("Genesis Ops PROJEKTISKANNERI (ei crypto, ei mission control)")
+    print(url)
     print("Koti:", home())
     print("Sulje: Ctrl+C")
-    threading.Timer(0.6, lambda: webbrowser.open(f"http://127.0.0.1:{PORT}")).start()
+    threading.Timer(0.6, lambda: webbrowser.open(url)).start()
     try:
         server.serve_forever()
     except KeyboardInterrupt:
