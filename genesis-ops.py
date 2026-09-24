@@ -117,111 +117,111 @@ def scan() -> dict:
 
 
 PAGE = r"""<!doctype html>
-<html lang="fi">
+<html lang="en">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Genesis Ops — tämä kone</title>
+<title>Genesis Ops</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&family=Fraunces:ital,opsz,wght@0,9..144,500;1,9..144,500&display=swap" rel="stylesheet"/>
 <style>
-:root{--bg:#0e1412;--surface:#171f1b;--fg:#edf3ee;--muted:#8f9d94;--gold:#d4b483;--ink:#1a140c;--line:#2a3530;--crit:#e08a7a;--ok:#8fbf9a}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.45 Figtree,system-ui,sans-serif}
-header{padding:20px 24px 8px;border-bottom:1px solid var(--line)}
-h1{font-family:Fraunces,Georgia,serif;font-weight:500;font-size:2rem;margin:0}
-h1 span{color:var(--gold);font-style:italic}
-.sub{color:var(--muted);font-size:.9rem}
-.bar{display:flex;flex-wrap:wrap;gap:8px;padding:12px 24px}
-button,select{min-height:44px;border:0;border-radius:999px;background:#1e2923;color:var(--muted);padding:0 14px;cursor:pointer}
-button.on{background:var(--gold);color:var(--ink);font-weight:650}
-main{display:grid;grid-template-columns:280px 1fr;gap:16px;padding:8px 24px 32px}
-@media(max-width:800px){main{grid-template-columns:1fr}}
-.card{background:var(--surface);border-radius:16px;padding:14px}
-ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
-li{background:var(--surface);border-radius:14px;padding:12px 14px}
-.path{color:var(--muted);font-size:.78rem;word-break:break-all}
-.tag{display:inline-block;border-radius:999px;padding:2px 8px;background:#1e2923;color:var(--gold);font-size:.75rem;margin-right:6px}
-.warn{color:var(--crit)}
+:root{--bg:#0e1412;--surface:#171f1b;--raised:#1e2923;--fg:#edf3ee;--muted:#8f9d94;--primary:#d4b483;--ink:#1a140c;--crit:#e08a7a;--ok:#8fbf9a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 Figtree,sans-serif}
+header{padding:28px 32px 8px}h1{font-family:Fraunces,serif;font-weight:500;font-size:2.4rem;margin:4px 0;font-style:italic}
+h1 span{color:var(--primary);font-style:normal}.kicker{letter-spacing:.14em;text-transform:uppercase;color:var(--primary);font-size:.75rem;font-weight:600}
+.muted{color:var(--muted)}.wrap{max-width:72rem;margin:0 auto;padding:0 32px 40px}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:16px 0}
+@media(max-width:800px){.kpis{grid-template-columns:1fr 1fr}}
+.kpi,.card,li.item{background:var(--surface);border-radius:16px;box-shadow:0 0 0 1px rgba(255,255,255,.07)}
+.kpi{padding:12px 16px}.kpi b{display:block;font-family:Fraunces,serif;font-size:1.7rem;font-weight:500}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0}
+button,input{min-height:44px;border:0;border-radius:999px;background:var(--raised);color:var(--muted);padding:0 14px}
+button.on,button.tab.on{background:var(--raised);color:var(--primary);box-shadow:0 0 0 1px rgba(255,255,255,.07)}
+ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+li.item{padding:16px 18px}h2{font-family:Fraunces,serif;font-size:1.25rem;margin:8px 0}
+.pill{display:inline-flex;min-height:28px;align-items:center;border-radius:999px;padding:0 10px;background:var(--raised);color:var(--muted);font-size:.75rem;margin-right:6px}
+.pill.bad{color:var(--crit)}
+.bar{height:6px;background:var(--raised);border-radius:999px;overflow:hidden;margin-top:10px}
+.bar i{display:block;height:100%;background:var(--primary)}
 svg{width:100%;height:auto}
 </style>
 </head>
 <body>
-<header>
-  <p class="sub">Projektiskanneri · ei crypto dashboard :8765 · ei mission control :8766</p>
+<header class="wrap">
+  <p class="kicker">Librarian SSOT · this computer · port 8787</p>
   <h1>Genesis <span>Ops</span></h1>
-  <p class="sub" id="meta">skannataan…</p>
+  <p class="muted" id="meta">Scanning this disk. Not the crypto dashboard. Not Mission Control.</p>
 </header>
-<div class="bar" id="filters"></div>
-<main>
-  <section class="card"><p class="sub">Kansiot</p><svg id="map" viewBox="0 0 280 280"></svg></section>
-  <section><ul id="list"></ul></section>
-</main>
+<div class="wrap">
+  <div class="kpis" id="kpis"></div>
+  <div class="row" id="filters"></div>
+  <div class="row" id="tabs"></div>
+  <div id="view"></div>
+</div>
 <script>
-let DATA={projects:[]};
-const state={kind:"",folder:"",q:""};
+let DATA={projects:[]}, tab="attention", kind="", folder="";
+const tabs=["attention","map","projects"];
 async function load(){
   const r=await fetch("/api/scan");
   DATA=await r.json();
   document.getElementById("meta").textContent=
-    DATA.home+" · "+DATA.count+" projektia · "+(DATA.scannedAt||"").slice(0,19).replace("T"," ");
-  drawFilters(); draw();
+    "This computer · "+DATA.home+" · "+DATA.count+" projects · "+(DATA.scannedAt||"").replace("T"," ").slice(0,19)+" · not :8765 · not :8766";
+  draw();
 }
 function shown(){
-  return DATA.projects.filter(p=>{
-    if(state.kind && p.kind!==state.kind) return false;
-    if(state.folder && p.folder!==state.folder) return false;
-    if(state.q && !(p.name+" "+p.path).toLowerCase().includes(state.q)) return false;
+  return (DATA.projects||[]).filter(p=>{
+    if(kind && p.kind!==kind) return false;
+    if(folder && p.folder!==folder) return false;
     return true;
   });
 }
-function drawFilters(){
-  const kinds=[...new Set(DATA.projects.map(p=>p.kind))];
-  const folders=[...new Set(DATA.projects.map(p=>p.folder))].slice(0,12);
+function hot(list){return list.filter(p=>p.alerts && p.alerts.length)}
+function draw(){
+  const rows=shown();
+  const need=hot(rows);
+  const bits=[["On this disk",rows.length],["Needs you",need.length],["No git",rows.filter(p=>!p.git).length],["Quiet 30d+",rows.filter(p=>p.age>30).length],["Folders",new Set(rows.map(p=>p.folder)).size]];
+  document.getElementById("kpis").innerHTML=bits.map(b=>'<div class="kpi"><b>'+b[1]+'</b><span class="muted">'+b[0]+'</span></div>').join("");
   const bar=document.getElementById("filters");
   bar.innerHTML="";
-  const add=(label,on,fn)=>{
-    const b=document.createElement("button");
-    b.textContent=label; b.className=on?"on":""; b.onclick=fn; bar.appendChild(b);
-  };
-  add("Kaikki",!state.kind&&!state.folder,()=>{state.kind="";state.folder="";draw()});
-  kinds.forEach(k=>add(k,state.kind===k,()=>{state.kind=state.kind===k?"":k;draw()}));
-  folders.forEach(f=>add(f,state.folder===f,()=>{state.folder=state.folder===f?"":f;draw()}));
-  const inp=document.createElement("input");
-  inp.placeholder="hae"; inp.value=state.q;
-  inp.style.cssText="min-height:44px;border-radius:999px;border:0;background:#1e2923;color:#edf3ee;padding:0 14px";
-  inp.oninput=()=>{state.q=inp.value.toLowerCase();drawList()};
-  bar.appendChild(inp);
+  const add=(label,on,fn)=>{const b=document.createElement("button");b.textContent=label;if(on)b.className="on";b.onclick=fn;bar.appendChild(b);};
+  add("All",!kind&&!folder,()=>{kind="";folder="";draw()});
+  [...new Set((DATA.projects||[]).map(p=>p.kind))].forEach(k=>add(k,kind===k,()=>{kind=kind===k?"":k;draw()}));
+  const tabsEl=document.getElementById("tabs");
+  tabsEl.innerHTML="";
+  tabs.forEach(t=>{const b=document.createElement("button");b.className="tab"+(tab===t?" on":"");b.textContent=t[0].toUpperCase()+t.slice(1)+(t==="attention"?" "+need.length:"");b.onclick=()=>{tab=t;draw()};tabsEl.appendChild(b);});
+  const view=document.getElementById("view");
+  if(tab==="attention") view.innerHTML=need.length?("<ul>"+need.slice(0,40).map(card).join("")+"</ul>"):'<p class="muted">Nothing needs attention in this filter.</p>';
+  else if(tab==="projects") view.innerHTML="<ul>"+rows.slice(0,80).map(card).join("")+"</ul>";
+  else view.innerHTML='<div class="card" style="padding:16px"><p class="kicker">Folders</p><svg id="map" viewBox="0 0 640 420"></svg></div>';
+  if(tab==="map") drawMap(rows);
 }
-function draw(){drawFilters();drawMap();drawList()}
-function drawMap(){
-  const rows=shown();
+function card(p){
+  const alerts=(p.alerts||[]).map(a=>'<span class="pill bad">'+a+"</span>").join("");
+  const pct=Math.max(8,Math.min(100,100-Math.min(p.age,90)));
+  return '<li class="item"><div class="pill">'+p.kind+'</div><div class="pill">'+(p.git?"git":"no git")+'</div><h2>'+p.name+'</h2><p class="muted">'+p.path+" · "+p.age+"d · "+p.updated+'</p><div class="bar"><i style="width:'+pct+'%"></i></div><p>'+alerts+"</p></li>";
+}
+function drawMap(rows){
   const groups={};
   rows.forEach(p=>{groups[p.folder]=(groups[p.folder]||0)+1});
-  const entries=Object.entries(groups).sort((a,b)=>b[1]-a[1]).slice(0,16);
+  const entries=Object.entries(groups).sort((a,b)=>b[1]-a[1]).slice(0,24);
   const max=Math.max(1,...entries.map(e=>e[1]));
   const svg=document.getElementById("map");
   svg.innerHTML="";
   entries.forEach(([name,n],i)=>{
-    const a=i*2.399; const rad=20+Math.sqrt(i/Math.max(1,entries.length))*100;
+    const a=i*2.399, rad=Math.sqrt(i/Math.max(1,entries.length))*180;
     const c=document.createElementNS("http://www.w3.org/2000/svg","circle");
-    c.setAttribute("cx",140+Math.cos(a)*rad); c.setAttribute("cy",140+Math.sin(a)*rad);
-    c.setAttribute("r",8+Math.sqrt(n/max)*28);
-    c.setAttribute("fill","#d4b483"); c.setAttribute("fill-opacity",state.folder===name?"1":".55");
+    c.setAttribute("cx",320+Math.cos(a)*rad); c.setAttribute("cy",210+Math.sin(a)*rad);
+    c.setAttribute("r",12+Math.sqrt(n/max)*36);
+    c.setAttribute("fill","#d4b483"); c.setAttribute("fill-opacity", folder===name?"1":".55");
     c.style.cursor="pointer";
-    c.onclick=()=>{state.folder=state.folder===name?"":name;draw()};
+    c.onclick=()=>{folder=folder===name?"":name; tab="projects"; draw()};
     svg.appendChild(c);
+    const t=document.createElementNS("http://www.w3.org/2000/svg","text");
+    t.setAttribute("x",320+Math.cos(a)*rad); t.setAttribute("y",210+Math.sin(a)*rad+4);
+    t.setAttribute("fill","#1a140c"); t.setAttribute("font-size","11"); t.setAttribute("text-anchor","middle");
+    t.textContent=name.slice(0,14);
+    svg.appendChild(t);
   });
-}
-function drawList(){
-  const ul=document.getElementById("list");
-  const rows=shown();
-  ul.innerHTML="";
-  rows.slice(0,80).forEach(p=>{
-    const li=document.createElement("li");
-    li.innerHTML='<span class="tag">'+p.kind+'</span><b>'+p.name+'</b> <span class="sub">'+p.age+' pv</span>'
-      +(p.alerts.length?'<div class="warn">'+p.alerts.join(" · ")+'</div>':'')
-      +'<div class="path">'+p.path+'</div>';
-    ul.appendChild(li);
-  });
-  if(!rows.length) ul.innerHTML="<li>Ei osumia.</li>";
 }
 load();
 setInterval(load,60000);
@@ -229,8 +229,6 @@ setInterval(load,60000);
 </body>
 </html>
 """
-
-
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt: str, *args) -> None:
         return
@@ -386,6 +384,7 @@ WantedBy=default.target
     except FileNotFoundError:
         print("systemd ei ole tässä ympäristössä")
         return
+    subprocess.run(["systemctl", "--user", "restart", "genesis-ops.service"], check=False)
     if started.returncode == 0:
         print("Aina päällä: genesis-ops.service")
     else:
