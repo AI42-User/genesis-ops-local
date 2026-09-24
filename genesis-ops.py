@@ -122,83 +122,138 @@ PAGE = r"""<!doctype html>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Genesis Ops</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&family=Fraunces:ital,opsz,wght@0,9..144,500;1,9..144,500&display=swap" rel="stylesheet"/>
 <style>
 :root{--bg:#0e1412;--surface:#171f1b;--raised:#1e2923;--fg:#edf3ee;--muted:#8f9d94;--primary:#d4b483;--ink:#1a140c;--crit:#e08a7a;--ok:#8fbf9a}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 Figtree,sans-serif}
-header{padding:28px 32px 8px}h1{font-family:Fraunces,serif;font-weight:500;font-size:2.4rem;margin:4px 0;font-style:italic}
-h1 span{color:var(--primary);font-style:normal}.kicker{letter-spacing:.14em;text-transform:uppercase;color:var(--primary);font-size:.75rem;font-weight:600}
-.muted{color:var(--muted)}.wrap{max-width:72rem;margin:0 auto;padding:0 32px 40px}
-.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:16px 0}
-@media(max-width:800px){.kpis{grid-template-columns:1fr 1fr}}
-.kpi,.card,li.item{background:var(--surface);border-radius:16px;box-shadow:0 0 0 1px rgba(255,255,255,.07)}
-.kpi{padding:12px 16px}.kpi b{display:block;font-family:Fraunces,serif;font-size:1.7rem;font-weight:500}
-.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0}
-button,input{min-height:44px;border:0;border-radius:999px;background:var(--raised);color:var(--muted);padding:0 14px}
-button.on,button.tab.on{background:var(--raised);color:var(--primary);box-shadow:0 0 0 1px rgba(255,255,255,.07)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 Figtree,sans-serif}
+.wrap{max-width:72rem;margin:0 auto;padding:28px 28px 48px}
+.kicker{letter-spacing:.16em;text-transform:uppercase;color:var(--primary);font-size:.72rem;font-weight:600}
+h1{font-family:Fraunces,serif;font-style:italic;font-weight:500;font-size:2.6rem;margin:6px 0}
+h1 span{color:var(--primary);font-style:normal}
+.muted{color:var(--muted)}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:18px 0}
+@media(max-width:900px){.kpis{grid-template-columns:1fr 1fr}}
+.card{background:var(--surface);border-radius:18px;box-shadow:0 0 0 1px rgba(255,255,255,.07)}
+.kpi{padding:14px 16px}.kpi b{display:block;font-family:Fraunces,serif;font-size:1.8rem;font-weight:500}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0}
+button,input{min-height:44px;border:0;border-radius:999px;background:transparent;color:var(--muted);padding:0 14px;font:inherit}
+button.tab.on{background:var(--raised);color:var(--primary);box-shadow:0 0 0 1px rgba(255,255,255,.07)}
+button.chip{background:var(--raised);color:var(--muted)}
+button.chip.on{background:var(--primary);color:var(--ink);font-weight:650}
+button.gold{background:var(--primary);color:var(--ink);font-weight:650}
+label.chk{display:inline-flex;gap:8px;align-items:center;min-height:44px;color:var(--muted)}
 ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
-li.item{padding:16px 18px}h2{font-family:Fraunces,serif;font-size:1.25rem;margin:8px 0}
-.pill{display:inline-flex;min-height:28px;align-items:center;border-radius:999px;padding:0 10px;background:var(--raised);color:var(--muted);font-size:.75rem;margin-right:6px}
-.pill.bad{color:var(--crit)}
-.bar{height:6px;background:var(--raised);border-radius:999px;overflow:hidden;margin-top:10px}
-.bar i{display:block;height:100%;background:var(--primary)}
-svg{width:100%;height:auto}
+li.item{padding:18px 20px}
+.lvl{color:var(--crit);font-size:.72rem;letter-spacing:.08em;font-weight:700}
+h2{font-family:Fraunces,serif;font-size:1.35rem;margin:6px 0;font-weight:500}
+.dot{width:8px;height:8px;border-radius:99px;display:inline-block;background:var(--primary);margin-right:6px}
+.search{margin-left:auto;background:var(--surface);box-shadow:0 0 0 1px rgba(255,255,255,.07);min-width:220px}
+.lab{font-size:.68rem;letter-spacing:.12em;color:var(--muted);width:64px}
 </style>
 </head>
 <body>
-<header class="wrap">
-  <p class="kicker">Librarian SSOT · this computer · port 8787</p>
-  <h1>Genesis <span>Ops</span></h1>
-  <p class="muted" id="meta">Scanning this disk. Not the crypto dashboard. Not Mission Control.</p>
-</header>
 <div class="wrap">
+  <p class="kicker">Librarian SSOT</p>
+  <h1>Genesis <span>Ops</span></h1>
+  <p class="muted" id="meta">This computer · port 8787 · not crypto dashboard · not Mission Control</p>
   <div class="kpis" id="kpis"></div>
-  <div class="row" id="filters"></div>
+  <label class="chk"><input id="catalog" type="checkbox" checked/> Include Grok catalog</label>
   <div class="row" id="tabs"></div>
+  <div class="row" id="filters"></div>
   <div id="view"></div>
 </div>
 <script>
-let DATA={projects:[]}, tab="attention", kind="", folder="";
-const tabs=["attention","map","projects"];
+const CATALOG=[
+ {id:"genesis-bootstrap",name:"Genesis Bootstrap / Runtime",kind:"infra",folder:"Genesis Bootstrap",origin:"genesis",git:true,age:83,updated:"2026-07-03",alerts:["viability stale (83 d)"],detail:"last_reviewed=2026-07-03. Librarian forces re-review after 30 days."},
+ {id:"genesis-tech-scout",name:"Genesis Tech Scout",kind:"infra",folder:"Genesis Tech Scout",origin:"genesis",git:true,age:83,updated:"2026-07-03",alerts:["viability stale (83 d)"],detail:"last_reviewed=2026-07-03. Librarian forces re-review after 30 days."},
+ {id:"own-account-yield",name:"Own-account yield lanes",kind:"yield",folder:"Own-account yield lanes",origin:"genesis",git:true,age:4,updated:"2026-09-20",alerts:["No wallet or live positions in this workspace"],detail:"Skills on disk. No live wallet audit."},
+ {id:"fi-legal",name:"FI legal / insurance / debt",kind:"domain",folder:"FI legal",origin:"genesis",git:true,age:40,updated:"2026-08-15",alerts:["needs a fresh review"],detail:"Domain pack. Re-check before acting."},
+ {id:"ops-board",name:"Ops board + attention agent",kind:"content",folder:"Ops board + attention agent",origin:"genesis",git:true,age:4,updated:"2026-09-20",alerts:[],detail:"This board."},
+ {id:"kids-yt",name:"Kids YouTube strategist",kind:"content",folder:"Kids YouTube strategist",origin:"genesis",git:true,age:50,updated:"2026-08-05",alerts:["idea gone quiet"],detail:"No publish loop in this workspace."},
+ {id:"cex-vip",name:"CEX VIP / Base App audits",kind:"audit",folder:"CEX VIP",origin:"genesis",git:true,age:20,updated:"2026-09-04",alerts:[],detail:"Audit notes only. No live keys."}
+];
+let DISK=[], tab="attention", kind="", folder="", flag="", q="";
+const reviewed=new Set(JSON.parse(localStorage.getItem("gops-reviewed")||"[]"));
 async function load(){
   const r=await fetch("/api/scan");
-  DATA=await r.json();
-  document.getElementById("meta").textContent=
-    "This computer · "+DATA.home+" · "+DATA.count+" projects · "+(DATA.scannedAt||"").replace("T"," ").slice(0,19)+" · not :8765 · not :8766";
+  const data=await r.json();
+  DISK=(data.projects||[]).map(p=>({...p,id:p.path,origin:"local",detail:(p.alerts||[]).join(" · ")||"On this disk."}));
+  document.getElementById("meta").textContent="This computer · "+data.home+" · "+data.count+" on disk · "+(data.scannedAt||"").replace("T"," ").slice(0,19)+" · port 8787 · not :8765 · not :8766";
   draw();
 }
-function shown(){
-  return (DATA.projects||[]).filter(p=>{
-    if(kind && p.kind!==kind) return false;
-    if(folder && p.folder!==folder) return false;
+function pool(){
+  const cat=document.getElementById("catalog").checked?CATALOG:[];
+  return DISK.concat(cat).filter(p=>{
+    if(reviewed.has(p.id)) return flag!=="attention";
+    if(flag==="git"&&!p.git) return false;
+    if(flag==="nogit"&&p.git) return false;
+    if(flag==="rust"&&p.kind!=="rust") return false;
+    if(flag==="go"&&p.kind!=="go") return false;
+    if(flag==="attention"&&!(p.alerts||[]).length) return false;
+    if(flag==="local"&&p.origin!=="local") return false;
+    if(flag==="genesis"&&p.origin!=="genesis") return false;
+    if(kind&&p.kind!==kind) return false;
+    if(folder&&p.folder!==folder) return false;
+    if(q&&!(p.name+" "+(p.path||"")).toLowerCase().includes(q)) return false;
     return true;
   });
 }
-function hot(list){return list.filter(p=>p.alerts && p.alerts.length)}
 function draw(){
-  const rows=shown();
-  const need=hot(rows);
-  const bits=[["On this disk",rows.length],["Needs you",need.length],["No git",rows.filter(p=>!p.git).length],["Quiet 30d+",rows.filter(p=>p.age>30).length],["Folders",new Set(rows.map(p=>p.folder)).size]];
-  document.getElementById("kpis").innerHTML=bits.map(b=>'<div class="kpi"><b>'+b[1]+'</b><span class="muted">'+b[0]+'</span></div>').join("");
-  const bar=document.getElementById("filters");
-  bar.innerHTML="";
-  const add=(label,on,fn)=>{const b=document.createElement("button");b.textContent=label;if(on)b.className="on";b.onclick=fn;bar.appendChild(b);};
-  add("All",!kind&&!folder,()=>{kind="";folder="";draw()});
-  [...new Set((DATA.projects||[]).map(p=>p.kind))].forEach(k=>add(k,kind===k,()=>{kind=kind===k?"":k;draw()}));
-  const tabsEl=document.getElementById("tabs");
-  tabsEl.innerHTML="";
-  tabs.forEach(t=>{const b=document.createElement("button");b.className="tab"+(tab===t?" on":"");b.textContent=t[0].toUpperCase()+t.slice(1)+(t==="attention"?" "+need.length:"");b.onclick=()=>{tab=t;draw()};tabsEl.appendChild(b);});
+  const rows=pool();
+  const all=DISK.concat(document.getElementById("catalog").checked?CATALOG:[]);
+  const need=all.filter(p=>(p.alerts||[]).length&&!reviewed.has(p.id));
+  const bits=[["On this disk",DISK.length],["Grok catalog",document.getElementById("catalog").checked?CATALOG.length:0],["Rust crates",DISK.filter(p=>p.kind==="rust").length],["Genesis active","5/5"],["Needs you",need.length]];
+  document.getElementById("kpis").innerHTML=bits.map(b=>'<div class="card kpi"><b>'+b[1]+'</b><span class="muted">'+b[0]+'</span></div>').join("");
+  const tabs=document.getElementById("tabs");
+  tabs.innerHTML="";
+  ["attention","map","projects","skills","ledger"].forEach(t=>{
+    const b=document.createElement("button");
+    b.className="tab"+(tab===t?" on":"");
+    b.textContent=(t[0].toUpperCase()+t.slice(1))+(t==="attention"?" "+need.length:"");
+    b.onclick=()=>{tab=t;draw()};
+    tabs.appendChild(b);
+  });
+  const inp=document.createElement("input");
+  inp.className="search"; inp.placeholder="Filter…"; inp.value=q;
+  inp.oninput=()=>{q=inp.value.toLowerCase();drawList()};
+  tabs.appendChild(inp);
+  const filters=document.getElementById("filters");
+  filters.innerHTML="";
+  const addRow=(label,items,cur,set)=>{
+    const lab=document.createElement("span"); lab.className="lab"; lab.textContent=label; filters.appendChild(lab);
+    items.forEach(([id,text])=>{
+      const b=document.createElement("button");
+      b.className="chip"+(cur===id?" on":"");
+      b.textContent=text;
+      b.onclick=()=>set(cur===id?"":id);
+      filters.appendChild(b);
+    });
+    filters.appendChild(document.createElement("div"));
+    filters.lastChild.style.flexBasis="100%";
+  };
+  addRow("SHOW",[["","All"],["local","This PC"],["genesis","Grok catalog"],["git","Git"],["nogit","No git"],["rust","Rust"],["go","Go"],["attention","Needs attention"]],flag,v=>{flag=v;draw()});
+  const kinds=[...new Set(all.map(p=>p.kind))];
+  addRow("KIND",kinds.map(k=>[k,k+" "+all.filter(p=>p.kind===k).length]),kind,v=>{kind=v;draw()});
+  const folders=[...new Set(all.map(p=>p.folder))].slice(0,12);
+  addRow("FOLDER",folders.map(f=>[f,f+" "+all.filter(p=>p.folder===f).length]),folder,v=>{folder=v;draw()});
+  document.getElementById("catalog").onchange=draw;
   const view=document.getElementById("view");
-  if(tab==="attention") view.innerHTML=need.length?("<ul>"+need.slice(0,40).map(card).join("")+"</ul>"):'<p class="muted">Nothing needs attention in this filter.</p>';
-  else if(tab==="projects") view.innerHTML="<ul>"+rows.slice(0,80).map(card).join("")+"</ul>";
-  else view.innerHTML='<div class="card" style="padding:16px"><p class="kicker">Folders</p><svg id="map" viewBox="0 0 640 420"></svg></div>';
-  if(tab==="map") drawMap(rows);
+  const list=tab==="attention"?rows.filter(p=>(p.alerts||[]).length):rows;
+  if(tab==="map"){view.innerHTML='<div class="card" style="padding:16px"><svg id="map" viewBox="0 0 640 420"></svg></div>';drawMap(rows);return;}
+  if(tab==="skills"||tab==="ledger"){view.innerHTML='<p class="muted">Same board. '+(tab==="skills"?"Skills live on disk under the project paths.":"Ledger is the scan itself: "+DISK.length+" paths.")+'</p>';return;}
+  view.innerHTML='<ul id="list"></ul>';
+  drawList(list);
 }
-function card(p){
-  const alerts=(p.alerts||[]).map(a=>'<span class="pill bad">'+a+"</span>").join("");
-  const pct=Math.max(8,Math.min(100,100-Math.min(p.age,90)));
-  return '<li class="item"><div class="pill">'+p.kind+'</div><div class="pill">'+(p.git?"git":"no git")+'</div><h2>'+p.name+'</h2><p class="muted">'+p.path+" · "+p.age+"d · "+p.updated+'</p><div class="bar"><i style="width:'+pct+'%"></i></div><p>'+alerts+"</p></li>";
+function drawList(list){
+  const ul=document.getElementById("list");
+  if(!ul) return;
+  const rows=list||pool();
+  ul.innerHTML=rows.slice(0,60).map(p=>{
+    const code=(p.alerts&&p.alerts[0])?"stale_review":"ok";
+    return '<li class="item card"><div class="lvl">'+(p.alerts&&p.alerts.length?"CRIT":"OK")+' '+code+'</div><h2>'+p.name+(p.alerts&&p.alerts[0]?": "+p.alerts[0]:"")+'</h2><p class="muted">'+(p.detail||p.path||"")+'</p><div class="row"><button class="gold" data-id="'+p.id+'">Mark reviewed today</button><button data-open="'+encodeURIComponent(p.path||p.name)+'">Open project</button></div></li>';
+  }).join("")||'<li class="item card"><p class="muted">Nothing matches.</p></li>';
+  ul.querySelectorAll("button.gold").forEach(b=>b.onclick=()=>{reviewed.add(b.dataset.id);localStorage.setItem("gops-reviewed",JSON.stringify([...reviewed]));draw()});
+  ul.querySelectorAll("button[data-open]").forEach(b=>b.onclick=()=>{folder="";q=decodeURIComponent(b.dataset.open).split("/").pop();tab="projects";draw()});
 }
 function drawMap(rows){
   const groups={};
@@ -206,23 +261,16 @@ function drawMap(rows){
   const entries=Object.entries(groups).sort((a,b)=>b[1]-a[1]).slice(0,24);
   const max=Math.max(1,...entries.map(e=>e[1]));
   const svg=document.getElementById("map");
-  svg.innerHTML="";
   entries.forEach(([name,n],i)=>{
-    const a=i*2.399, rad=Math.sqrt(i/Math.max(1,entries.length))*180;
+    const a=i*2.399, rad=Math.sqrt((i+1)/entries.length)*170;
     const c=document.createElementNS("http://www.w3.org/2000/svg","circle");
     c.setAttribute("cx",320+Math.cos(a)*rad); c.setAttribute("cy",210+Math.sin(a)*rad);
-    c.setAttribute("r",12+Math.sqrt(n/max)*36);
-    c.setAttribute("fill","#d4b483"); c.setAttribute("fill-opacity", folder===name?"1":".55");
-    c.style.cursor="pointer";
-    c.onclick=()=>{folder=folder===name?"":name; tab="projects"; draw()};
+    c.setAttribute("r",14+Math.sqrt(n/max)*34); c.setAttribute("fill","#d4b483"); c.setAttribute("fill-opacity",".7");
+    c.style.cursor="pointer"; c.onclick=()=>{folder=name;tab="projects";draw()};
     svg.appendChild(c);
-    const t=document.createElementNS("http://www.w3.org/2000/svg","text");
-    t.setAttribute("x",320+Math.cos(a)*rad); t.setAttribute("y",210+Math.sin(a)*rad+4);
-    t.setAttribute("fill","#1a140c"); t.setAttribute("font-size","11"); t.setAttribute("text-anchor","middle");
-    t.textContent=name.slice(0,14);
-    svg.appendChild(t);
   });
 }
+document.getElementById("catalog").checked=true;
 load();
 setInterval(load,60000);
 </script>
