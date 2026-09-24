@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import os
+import subprocess
 import sys
 import threading
 import webbrowser
@@ -271,8 +272,9 @@ def serve() -> None:
     print("Genesis Ops PROJEKTISKANNERI (ei crypto, ei mission control)")
     print(url)
     print("Koti:", home())
-    print("Sulje: Ctrl+C")
-    threading.Timer(0.6, lambda: webbrowser.open(url)).start()
+    print("Sulje palvelu: systemctl --user stop genesis-ops")
+    if "--no-browser" not in sys.argv:
+        threading.Timer(0.6, lambda: webbrowser.open(url)).start()
     try:
         server.serve_forever()
     except KeyboardInterrupt:
@@ -284,17 +286,32 @@ def install() -> None:
     dest_dir = install_dir()
     dest_dir.mkdir(parents=True, exist_ok=True)
     target = dest_dir / "genesis-ops.py"
-    text = src.read_text(encoding="utf-8")
-    target.write_text(text, encoding="utf-8")
+    target.write_text(src.read_text(encoding="utf-8"), encoding="utf-8")
     target.chmod(0o755)
+    opener = dest_dir / "open.sh"
+    opener.write_text(
+        f"""#!/bin/bash
+URL=http://127.0.0.1:{PORT}/
+if ! curl -fsS -o /dev/null --max-time 2 "$URL"; then
+  systemctl --user start genesis-ops.service 2>/dev/null || true
+  for _ in 1 2 3 4 5 6 7 8 9 10 11 12; do
+    curl -fsS -o /dev/null --max-time 1 "$URL" && break
+    sleep 0.4
+  done
+fi
+xdg-open "$URL" >/dev/null 2>&1 || true
+""",
+        encoding="utf-8",
+    )
+    opener.chmod(0o755)
     desktop = f"""[Desktop Entry]
 Type=Application
 Version=1.0
 Name=Genesis Ops
-Comment=Paikallinen skanneri tälle koneelle
-Exec=/usr/bin/python3 {target}
+Comment=Projektiskanneri portissa {PORT}. Ei crypto, ei mission control.
+Exec={opener}
 Icon=utilities-system-monitor
-Terminal=true
+Terminal=false
 Categories=Utility;
 StartupNotify=true
 """
@@ -312,11 +329,70 @@ StartupNotify=true
         path = folder / "Genesis-Ops.desktop"
         path.write_text(desktop, encoding="utf-8")
         path.chmod(0o755)
+        try:
+            subprocess.run(
+                ["gio", "set", str(path), "metadata::trusted", "true"],
+                check=False,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+        except FileNotFoundError:
+            pass
         written.append(path)
+    autostart = Path.home() / ".config" / "autostart"
+    autostart.mkdir(parents=True, exist_ok=True)
+    auto = autostart / "Genesis-Ops.desktop"
+    auto.write_text(
+        desktop + "X-GNOME-Autostart-enabled=true\n",
+        encoding="utf-8",
+    )
+    auto.chmod(0o755)
+    unit_dir = Path.home() / ".config" / "systemd" / "user"
+    unit_dir.mkdir(parents=True, exist_ok=True)
+    unit = unit_dir / "genesis-ops.service"
+    unit.write_text(
+        f"""[Unit]
+Description=Genesis Ops project scanner on {PORT}
+After=default.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 {target} --no-browser
+WorkingDirectory={dest_dir}
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=default.target
+""",
+        encoding="utf-8",
+    )
     print("Asennettu:", target)
+    print("Kuvake avaa:", opener)
     for path in written:
         print(" kuvake:", path)
-    print("Avaa kuvake tai aja: python3", target)
+    print("Autostart:", auto)
+    print("Palvelu:", unit)
+    if os.environ.get("GENESIS_SKIP_SYSTEMD") == "1":
+        print("systemd ohitettu")
+        return
+    try:
+        subprocess.run(["systemctl", "--user", "daemon-reload"], check=False)
+        started = subprocess.run(
+            ["systemctl", "--user", "enable", "--now", "genesis-ops.service"],
+            check=False,
+        )
+        linger = subprocess.run(["loginctl", "enable-linger", os.environ.get("USER", "")], check=False)
+    except FileNotFoundError:
+        print("systemd ei ole tässä ympäristössä")
+        return
+    if started.returncode == 0:
+        print("Aina päällä: genesis-ops.service")
+    else:
+        print("Palvelua ei saatu päälle. Kirjautumisen jälkeen kuvake avaa sen.")
+    if linger.returncode != 0:
+        print("Linger ei mennyt (salasana voi puuttua). Käynnistyy kun kirjaudut sisään.")
+
 
 
 def check_ports() -> None:
